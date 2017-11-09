@@ -1,10 +1,12 @@
 """Views used by the SqlAlchemy connector"""
+import json
 from past.builtins import basestring
 
-from flask import Markup, flash, redirect
+from flask import Markup, flash, redirect, Response
 from flask_appbuilder import CompactCRUDMixin, expose
 from flask_appbuilder.actions import action
 from flask_appbuilder.models.sqla.interface import SQLAInterface
+from flask_appbuilder.security.decorators import has_access_api
 
 from flask_babel import lazy_gettext as _
 from flask_babel import gettext as __
@@ -14,7 +16,7 @@ from superset.utils import has_access
 from superset.connectors.base.views import DatasourceModelView
 from superset.views.base import (
     SupersetModelView, ListWidgetWithCheckboxes, DeleteMixin, DatasourceFilter,
-    get_datasource_exist_error_mgs,
+    get_datasource_exist_error_mgs, api
 )
 
 from . import models
@@ -264,6 +266,22 @@ class TableModelView(DatasourceModelView, DeleteMixin):  # noqa
     def _delete(self, pk):
         DeleteMixin._delete(self, pk)
 
+    @api
+    @has_access_api
+    @expose("/api/get/<table_id>/metrics", methods=["GET"])
+    def get_metrics(self, table_id):
+        cols = db.session.query(models.SqlMetric).filter(
+                models.SqlMetric.table_id == table_id).all()
+        columns = [{
+            'id': tn.id,
+            'metric_name': tn.metric_name,
+            'metric_type': tn.metric_type,
+            'expression': tn.expression,
+            'verbose_name': tn.verbose_name
+        }
+                 for tn in cols]
+        return json_success(json.dumps(columns))
+
     @expose('/edit/<pk>', methods=['GET', 'POST'])
     @has_access
     def edit(self, pk):
@@ -286,6 +304,9 @@ class TableModelView(DatasourceModelView, DeleteMixin):  # noqa
             tables=", ".join([t.table_name for t in tables]))
         flash(msg, 'info')
         return redirect('/tablemodelview/list/')
+
+def json_success(json_msg, status=200):
+    return Response(json_msg, status=status, mimetype="application/json")
 
 appbuilder.add_view(
     TableModelView,
