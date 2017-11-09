@@ -282,6 +282,28 @@ class TableModelView(DatasourceModelView, DeleteMixin):  # noqa
                  for tn in cols]
         return json_success(json.dumps(columns))
 
+    @api
+    @has_access_api
+    @expose("/api/get/<table_id>/columns", methods=["GET"])
+    def get_columns(self, table_id):
+        cols = db.session.query(models.TableColumn).filter(
+                models.TableColumn.table_id == table_id).all()
+        columns = [{
+            'id': tn.id,
+            'name': tn.column_name,
+            'type': tn.type,
+            'groupby': tn.groupby,
+            'sum': tn.sum,
+            'avg': tn.avg,
+            'max': tn.max,
+            'min': tn.min,
+            'filterable': tn.filterable,
+            'count_distinct': tn.count_distinct,
+            'verbose_name': tn.verbose_name
+        }
+                 for tn in cols]
+        return json_success(json.dumps(columns))
+
     @expose('/edit/<pk>', methods=['GET', 'POST'])
     @has_access
     def edit(self, pk):
