@@ -194,6 +194,7 @@ class DatabaseView(SupersetModelView, DeleteMixin):  # noqa
         'saved_queries', )
     edit_columns = add_columns
     show_columns = [
+        'id',
         'tables',
         'cache_timeout',
         'extra',
