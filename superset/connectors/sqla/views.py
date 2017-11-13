@@ -168,7 +168,7 @@ class TableModelView(DatasourceModelView, DeleteMixin):  # noqa
         'fetch_values_predicate', 'database', 'schema',
         'description', 'owner',
         'main_dttm_col', 'default_endpoint', 'offset', 'cache_timeout']
-    show_columns = edit_columns + ['perm']
+    show_columns = edit_columns + ['perm'] + ['id']
     related_views = [TableColumnInlineView, SqlMetricInlineView]
     base_order = ('changed_on', 'desc')
     search_columns = (
