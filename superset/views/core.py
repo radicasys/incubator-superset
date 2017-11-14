@@ -1912,6 +1912,61 @@ class Superset(BaseSupersetView):
             'table_id': table.id,
         }))
 
+    @expose("/sqllab_viz2/", methods=['POST'])
+    @log_this
+    def sqllab_viz2(self):
+        SqlaTable = ConnectorRegistry.sources['table']
+        data = json.loads(request.form.get('data'))
+        table_name = data.get('datasourceName')
+        SqlaTable = ConnectorRegistry.sources['table']
+        table = (
+            db.session.query(SqlaTable)
+            .filter_by(table_name=table_name)
+            .first()
+        )
+        if not table:
+            table = SqlaTable(table_name=table_name)
+        table.database_id = data.get('dbId')
+        if data.get('sql'):
+            q = SupersetQuery(data.get('sql'))
+            table.sql = q.stripped()
+
+        db.session.add(table)
+        cols = []
+        dims = []
+        metrics = []
+
+        for column_name, config in data.get('columns').items():
+            is_dim = config.get('is_dim', False)
+            SqlaTable = ConnectorRegistry.sources['table']
+            TableColumn = SqlaTable.column_class
+            SqlMetric = SqlaTable.metric_class
+            col = TableColumn(
+                column_name=column_name,
+                filterable=is_dim,
+                groupby=is_dim,
+                is_dttm=config.get('is_date', False),
+                type=config.get('type', False),
+            )
+            cols.append(col)
+            if is_dim:
+                dims.append(col)
+
+        for metric_name, config in data.get('metrics').items():
+            metrics.append(SqlMetric(
+                metric_name=metric_name,
+                verbose_name=config.get('verbose_name', metric_name),
+                metric_type=config.get('type', ''),
+                expression=config.get('expression', '')
+            ))
+
+        table.columns = cols
+        table.metrics = metrics
+        db.session.commit()
+        return self.json_response(json.dumps({
+            'table_id': table.id,
+        }))
+
     @has_access
     @expose("/table/<database_id>/<table_name>/<schema>/")
     @log_this
