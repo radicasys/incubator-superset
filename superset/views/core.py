@@ -1947,6 +1947,7 @@ class Superset(BaseSupersetView):
                 groupby=is_dim,
                 is_dttm=config.get('is_date', False),
                 type=config.get('type', False),
+                expression=config.get('expression', ''),
             )
             cols.append(col)
             if is_dim:
