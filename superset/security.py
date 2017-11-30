@@ -120,6 +120,8 @@ def is_alpha_only(pvm):
 def is_admin_pvm(pvm):
     return not is_user_defined_permission(pvm)
 
+def is_public_pvm(pvm):
+    return not (is_user_defined_permission(pvm) or is_sql_lab_pvm(pvm))
 
 def is_alpha_pvm(pvm):
     return not (is_user_defined_permission(pvm) or is_admin_only(pvm))
@@ -209,6 +211,8 @@ def sync_role_definitions():
     set_role('Gamma', is_gamma_pvm)
     set_role('granter', is_granter_pvm)
     set_role('sql_lab', is_sql_lab_pvm)
+    set_role('Public', is_public_pvm)
+
 
     if conf.get('PUBLIC_ROLE_LIKE_GAMMA', False):
         set_role('Public', is_gamma_pvm)
